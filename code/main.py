@@ -1,0 +1,81 @@
+""" an rag demo running in the terminal
+"""
+import typer
+from typing_extensions import Annotated
+from litellm import acompletion, completion
+from config import cfg
+from pathlib import Path
+from vectordb import VectorDB
+from rich.prompt import Prompt
+from rich.markdown import Markdown
+from rich.console import Console
+from rich.live import Live
+from rich.panel import Panel
+
+
+app = typer.Typer(help=__doc__)
+console = Console()
+
+
+def llm_demo(prompt):
+    response = completion(
+        messages=[{"content": prompt, "role": "user"}],
+        api_key=cfg.get("api_key"),
+        base_url=cfg.get("base_url"),
+        model=cfg.get("llm"),
+        custom_llm_provider="openai",
+        stream=True,
+    )
+    show(response)
+    # return response.choices[0].message.content
+
+
+def show(response, title="[green]"+cfg.get("llm")):
+    cache = ""
+    with Live(Panel(Markdown(cache), title=title), console=console, refresh_per_second=20) as live:
+        for chunk in response:
+            item = chunk.choices[0].delta.content or ""
+            cache += item
+            live.update(Panel(Markdown(cache), title=title))
+    return
+
+
+def answer(question, db, top_k=1, llm_func=llm_demo):
+    context = db.query(question, top_k)
+    docs = [f'Context {i}: {doc}' for i,doc in enumerate(context['documents'])]
+    ctx ='\n'.join(docs)
+    prompt = (
+        f"You will answer a question given the context related to sionna, a novel python package for wirless simulation. "
+        f"Note that the user cannot see the context. You shall provide a complete answer.\n"
+        f"CONTEXT:\n"
+        f"{ctx}\n"
+        f"QUESTION: {question}\n"
+    )
+    llm_func(prompt)
+
+
+# @app.command("batch")
+# def batch(
+# 
+# ):
+
+
+@app.command("demo")
+def demo(
+    docs_jsonl: Annotated[Path, typer.Argument(help="a jsonl file stores line of doc")],
+    embed_jsonl: Annotated[Path, typer.Argument(help="a jsonl file stores line of embedding")],
+    top_k: Annotated[int, typer.Option(help="number of contexts to retrieve")] = cfg.get("top_k", 1),
+):
+    assert docs_jsonl, f"Input docs_jsonl ({docs_jsonl}) doesn't exist."
+    assert embed_jsonl, f"Input embed_jsonl ({embed_jsonl}) doesn't exist."
+    db = VectorDB(docs_jsonl, embed_jsonl)
+    while question := Prompt.ask(
+        "Enter your question (quit by stroking [bold yellow]q[/] with [bold yellow]enter[/]):",
+        default="how to build a Differentiable Communication Systems using sionna ?"
+        ):
+        if question == 'q': break
+        answer(question, db, top_k)
+
+
+if __name__ == "__main__":
+    app()

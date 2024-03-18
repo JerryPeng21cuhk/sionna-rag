@@ -15,6 +15,8 @@ from rich import print
 import typer
 from typing_extensions import Annotated
 from rich.progress import track
+from clean import MarkdownReader
+import json
 
 
 app = typer.Typer(help=__doc__)
@@ -227,24 +229,33 @@ class MdTree:
             yield block
 
 
-def process_one_file(input: Path, output: Path):
+def debug_one_file(input: Path, output: Path):
     assert input != output, f"Input and output path ({input}) cannot be the same."
     with open(input, 'r') as reader, \
         open(output, 'w') as writer:
         for i, chunk in enumerate(MdTree(reader).chunk()):
-            # writer.write(f"{i}" + "="*80)
+            writer.write(f"{i}" + "="*80)
             writer.write(chunk)
 
 
-@app.command()
-def cli(
+def process_one_file(input: Path, output: Path):
+    assert input != output, f"Input and output path ({input}) cannot be the same."
+    with open(output, 'a') as writer, \
+        MarkdownReader(input) as reader:
+        for chunk in MdTree(reader).chunk():
+            json_string = json.dumps(chunk)
+            writer.write(json_string+"\n")
+
+
+@app.command("debug")
+def debug(
     input: Annotated[Path, typer.Argument(help="an input markdown file or a dir")],
     output: Annotated[Path, typer.Argument(help="where to store the file or the dir")],
 ):
     assert input.exists(), f"Input file/directory {input} doesn't exist."
     if input.is_file():
         output.parent.mkdir(parents=True, exist_ok=True)
-        process_one_file(input, output)
+        debug_one_file(input, output)
     else:
         import glob
         files = glob.glob(f"{input}/**/*.md", recursive=True)
@@ -254,9 +265,29 @@ def cli(
             base = Path(input_file).relative_to(input)
             output_file = output / base
             output_file.parent.mkdir(parents=True, exist_ok=True)
-            process_one_file(input_file, output_file)
+            debug_one_file(input_file, output_file)
         print(f"Saved to {output}")
         
+
+@app.command("run")
+def run(
+    input: Annotated[Path, typer.Argument(help="an input markdown file or a dir")],
+    output: Annotated[Path, typer.Argument(help="a jsonl file to store the output")],
+):
+    assert input.exists(), f"Input file/directory {input} doesn't exist."
+    output.parent.mkdir(parents=True, exist_ok=True)
+    with open(output, 'w') as writer: pass  # empty the file
+    if input.is_file():
+        process_one_file(input, output)
+    else:
+        import glob
+        files = glob.glob(f"{input}/**/*.md", recursive=True)
+        for file in track(
+                files,
+                description=f"Chunking {len(files)} markdown files from {input}"):
+            process_one_file(file, output)
+    print(f"Saved to {output}")
+
 
 if __name__ == "__main__":
     # only for debug purpose
