@@ -43,6 +43,19 @@ def read_jsonl(jsonl_fn):
     return lines
 
 
+def valid_load(docs_jsonl, embed_jsonl):
+    docs = read_jsonl(docs_jsonl)
+    embeds = read_jsonl(embed_jsonl)
+    assert len(docs) == len(embeds)
+    # skip failed embedding
+    is_failed = lambda x: isinstance(x[0], str)
+    idxs = [i for i,embed in enumerate(embeds) if not is_failed(embed)]
+    docs = [docs[idx] for idx in idxs]
+    embeds = [embeds[idx] for idx in idxs]
+    log.info(f"{len(docs)-len(idxs)} samples are failed and skipped")
+    return docs, embeds
+
+
 class VectorDB:
     def __init__(self, name: str):
         self.name = name  # cfg['vectordb']
@@ -63,8 +76,7 @@ class VectorDB:
             name=self.name,
             embedding_function=LiteLLMEmbedding(),
         )
-        docs = read_jsonl(docs_jsonl)
-        embeds = read_jsonl(embed_jsonl)
+        docs, embeds = valid_load(docs_jsonl, embed_jsonl)
         collection.upsert(
             embeddings=embeds,
             documents=docs,
