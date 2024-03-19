@@ -160,6 +160,7 @@ def block_read(lines):
     is_end_codeblock = lambda x: pattern_codeblock_end.match(x)
     buffer = []
     def flush_buffer():
+        nonlocal buffer
         block = '\n'.join(buffer)
         buffer = []
         return block
