@@ -1,7 +1,10 @@
 #!/bin/bash
 # 
 #  2024   jerrypeng1937@gmail.com
-#  demo on the usage
+#  demo on the usage of the code snippets to perform retrieval-augmented LLMs on sionna
+#  https://nvlabs.github.io/sionna/
+#  Some steps are unncessary and can be skipped.
+#  They are developped just for educational purpose.
 
 # Set bash to 'debug' mode, it will exit on :
 # -e 'error', -u 'undefined variable', -o ... 'error in pipeline', -x 'print commands',
