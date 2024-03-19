@@ -15,9 +15,18 @@ log() {
 }
 
 umask 000
+
+
 stage=0.0
 is_demo=true
+. utils/parse_options.sh
 
+
+if (( $(echo "$stage <= 0.0" | bc -l) )); then
+    python code/preprocess/clean.py \
+        data/markdown \
+        data/clean || { log "failed to clean"; exit 1; }
+fi
 
 if (( $(echo "$stage <= 0.1" | bc -l) )); then
     python code/preprocess/chunk.py run \
@@ -26,7 +35,7 @@ if (( $(echo "$stage <= 0.1" | bc -l) )); then
 fi
 
 if (( $(echo "$stage <= 0.2" | bc -l) )); then
-    python code/preprocess/parallel_request.py \
+    python code/parallel_request.py \
         --model text-embedding-3-small \
         data/chunk.jsonl \
         data/embed.jsonl || { log "failed to do parallel_request"; exit 1; }
@@ -34,7 +43,6 @@ fi
 
 if (( $(echo "$stage <= 0.3" | bc -l) )); then
     python code/vectordb.py \
-        --update-db true \
         data/chunk.jsonl \
         data/embed.jsonl || { log "failed to create vectordb"; exit 1; }
 fi
@@ -48,4 +56,5 @@ if (( $(echo "$stage <= 1.0" | bc -l) )); then
         python code/main.py batch \
             data/question.jsonl \
             data/answer.jsonl
+    fi
 fi

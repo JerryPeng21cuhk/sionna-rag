@@ -284,7 +284,7 @@ def run(
                 files,
                 description=f"Chunking {len(files)} markdown files from {input}"):
             process_one_file(file, output)
-    log(f"{__name__} completed. Results are saved to {output}")
+    log.info(f"{__name__} completed. Results are saved to {output}")
 
 
 if __name__ == "__main__":

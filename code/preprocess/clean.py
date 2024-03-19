@@ -161,7 +161,7 @@ def cli(
             output_file = output / base
             output_file.parent.mkdir(parents=True, exist_ok=True)
             process_one_file(input_file, output_file)
-        log(f"{__name__} completed. Results are saved to {output}")
+        log.info(f"{__name__} completed. Results are saved to {output}")
     
 
 if __name__ == "__main__":
