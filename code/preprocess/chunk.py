@@ -17,6 +17,7 @@ from typing_extensions import Annotated
 from rich.progress import track
 from clean import MarkdownReader
 import json
+from utils import log
 
 
 app = typer.Typer(help=__doc__)
@@ -104,7 +105,6 @@ class Line:
                 # if there is a title it must start with space or tab
                 return 
             self.heading_level = len(result[1])
-
             # strip whitespace and closing hashes
             title = title.strip().rstrip("#").rstrip()
             self.heading_title = title
@@ -169,11 +169,9 @@ def block_read(lines):
         if is_start_codeblock(line):
             yield flush_buffer()
             buffer.append(line)
-            
         elif is_end_codeblock(line):
             buffer.append(line)
             yield flush_buffer()
-
         buffer.append(line)
     yield flush_buffer()
 
@@ -266,7 +264,7 @@ def debug(
             output_file = output / base
             output_file.parent.mkdir(parents=True, exist_ok=True)
             debug_one_file(input_file, output_file)
-        print(f"Saved to {output}")
+        log(f"Saved to {output}")
         
 
 @app.command("run")
@@ -286,7 +284,7 @@ def run(
                 files,
                 description=f"Chunking {len(files)} markdown files from {input}"):
             process_one_file(file, output)
-    print(f"Saved to {output}")
+    log(f"{__name__} completed. Results are saved to {output}")
 
 
 if __name__ == "__main__":

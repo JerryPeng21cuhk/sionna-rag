@@ -1,13 +1,12 @@
 import chromadb
-import chromadb.utils.embedding_functions as embedding_functions
 from config import cfg
-from functools import partial
 from chromadb import Documents, EmbeddingFunction, Embeddings
 import requests
 from pathlib import Path
 import json
 import typer
 from typing_extensions import Annotated
+from preprocess import log
 
 
 app = typer.Typer(help=__doc__)
@@ -45,17 +44,35 @@ def read_jsonl(jsonl_fn):
 
 
 class VectorDB:
-    def __init__(self, docs_jsonl: Path, embed_jsonl: Path):
+    def __init__(self, name: str):
+        self.name = name  # cfg['vectordb']
+        client = chromadb.PersistentClient(path=f"data/{self.name}")
+        collection = client.get_or_create_collection(
+            name=self.name,
+            embedding_function=LiteLLMEmbedding(),
+        )
+        self.collection = collection
+        self.client = client
+        log.info(f"VectorDB loaded with {collection.count()} docs")
+
+    def rebuild(self, docs_jsonl: Path, embed_jsonl: Path):
+        client = chromadb.PersistentClient(path=f"data/{self.name}")
+        if self.name in client.list_collections():
+            client.delete_collection(name=self.name)
+        collection = client.get_or_create_collection(
+            name=self.name,
+            embedding_function=LiteLLMEmbedding(),
+        )
         docs = read_jsonl(docs_jsonl)
         embeds = read_jsonl(embed_jsonl)
-        chroma_client = chromadb.Client()
-        collection = chroma_client.create_collection(name=cfg['vectordb'], embedding_function=LiteLLMEmbedding())
-        collection.add(
+        collection.upsert(
             embeddings=embeds,
             documents=docs,
             ids=[f"id{idx}" for idx in range(len(docs))],
         )
         self.collection = collection
+        self.client = client
+        log.info(f"VectorDB reloaded with {collection.count()} docs")
 
     def query(self, text, top_k=5):
         assert isinstance(text, str)
@@ -70,11 +87,12 @@ class VectorDB:
 def cli(
     docs_jsonl: Annotated[Path, typer.Argument(help="a jsonl file stores line of doc")],
     embed_jsonl: Annotated[Path, typer.Argument(help="a jsonl file stores line of embedding")],
-    update_db: Annotated[bool, typer.Option(help="update the vectordb if true")] = False,
+    name: Annotated[str, typer.Option(help="database name")] = cfg.get("vectordb", "vectordb"),
 ):
     assert docs_jsonl, f"Input docs_jsonl ({docs_jsonl}) doesn't exist."
     assert embed_jsonl, f"Input embed_jsonl ({embed_jsonl}) doesn't exist."
-    db = VectorDB(docs_jsonl, embed_jsonl)
+    db = VectorDB(name)
+    db.rebuild(docs_jsonl, embed_jsonl)
     db.query("tensorflow")
 
 

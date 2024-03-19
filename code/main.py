@@ -11,6 +11,10 @@ from rich.markdown import Markdown
 from rich.console import Console
 from rich.live import Live
 from rich.panel import Panel
+from functools import partial
+import json
+from preprocess import log, LOGGING_HELP
+import logging
 
 
 app = typer.Typer(help=__doc__)
@@ -27,7 +31,6 @@ def llm_demo(prompt):
         stream=True,
     )
     show(response)
-    # return response.choices[0].message.content
 
 
 def show(response, title="[green]"+cfg.get("llm")):
@@ -51,24 +54,65 @@ def answer(question, db, top_k=1, llm_func=llm_demo):
         f"{ctx}\n"
         f"QUESTION: {question}\n"
     )
-    llm_func(prompt)
+    return llm_func(prompt)
 
 
-# @app.command("batch")
-# def batch(
-# 
-# ):
+@app.command("batch")
+def batch(
+    input_jsonl: Annotated[Path, typer.Argument(help="a jonsl file stores line of question")],
+    output_jsonl: Annotated[Path, typer.Argument(help="a jsonl file stores line of llm response")],
+    docs_jsonl: Annotated[Path, typer.Option(help="a jsonl file stores line of doc")] = None,
+    embed_jsonl: Annotated[Path, typer.Option(help="a jsonl file stores line of embedding")] = None,
+    vectordb: Annotated[str, typer.Option(help="name of the database")] = cfg.get("vectordb", "vectordb"),
+    rebuild: Annotated[bool, typer.Option(help="if true, rebuild the database from docs_jsonl and embed_jsonl")] = False,
+    top_k: Annotated[int, typer.Option(help="number of contexts to retrieve")] = cfg.get("top_k", 1),
+    logging_level: Annotated[int, typer.Option(help=LOGGING_HELP)] = logging.INFO,
+):
+    import os, tempfile
+    from parallel_request import cli
+    logging.basicConfig(level=logging_level, force=True)
+    log = logging.getLogger("rich")
+    db = VectorDB(vectordb)
+    if rebuild:
+        assert docs_jsonl, f"Input docs_jsonl ({docs_jsonl}) doesn't exist."
+        assert embed_jsonl, f"Input embed_jsonl ({embed_jsonl}) doesn't exist."
+        db.rebuild(docs_jsonl, embed_jsonl)
+    dump = lambda x: json.dumps([x])
+    add_context = partial(answer, db=db, top_k=top_k, llm_func=dump)
+    tmp = tempfile.NamedTemporaryFile(delete=False)
+    try:
+        log.info(f"{tmp.name} created for temperal storage")
+        with open(input_jsonl, 'r') as reader:
+            for line in reader:
+                question = json.loads(line)
+                question = add_context(question)
+                packed = json.dumps([{"role": "user", "content": question}])
+                tmp.write(f"{packed}\n".encode("utf-8"))
+        tmp.close()
+        cli(tmp.name, output_jsonl,
+            cfg.get('llm'), cfg.get('base_url'), cfg.get('api_key')
+        )
+    finally:
+        tmp.close()
+        os.unlink(tmp.name)
 
 
 @app.command("demo")
 def demo(
     docs_jsonl: Annotated[Path, typer.Argument(help="a jsonl file stores line of doc")],
     embed_jsonl: Annotated[Path, typer.Argument(help="a jsonl file stores line of embedding")],
+    vectordb: Annotated[str, typer.Option(help="name of the database")] = cfg.get("vectordb", "vectordb"),
+    rebuild: Annotated[bool, typer.Option(help="if true, rebuild the database from docs_jsonl and embed_jsonl")] = False,
     top_k: Annotated[int, typer.Option(help="number of contexts to retrieve")] = cfg.get("top_k", 1),
+    logging_level: Annotated[int, typer.Option(help=LOGGING_HELP)] = logging.ERROR,
 ):
-    assert docs_jsonl, f"Input docs_jsonl ({docs_jsonl}) doesn't exist."
-    assert embed_jsonl, f"Input embed_jsonl ({embed_jsonl}) doesn't exist."
-    db = VectorDB(docs_jsonl, embed_jsonl)
+    logging.basicConfig(level=logging_level, force=True)
+    log = logging.getLogger("rich")
+    db = VectorDB(vectordb)
+    if rebuild:
+        assert docs_jsonl, f"Input docs_jsonl ({docs_jsonl}) doesn't exist."
+        assert embed_jsonl, f"Input embed_jsonl ({embed_jsonl}) doesn't exist."
+        db.rebuild(docs_jsonl, embed_jsonl)
     while question := Prompt.ask(
         "Enter your question (quit by stroking [bold yellow]q[/] with [bold yellow]enter[/]):",
         default="how to build a Differentiable Communication Systems using sionna ?"

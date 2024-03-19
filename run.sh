@@ -16,6 +16,7 @@ log() {
 
 umask 000
 stage=0.0
+is_demo=true
 
 
 if (( $(echo "$stage <= 0.1" | bc -l) )); then
@@ -39,7 +40,12 @@ if (( $(echo "$stage <= 0.3" | bc -l) )); then
 fi
 
 if (( $(echo "$stage <= 1.0" | bc -l) )); then
-    python code/main.py demo \
-        data/chunk.jsonl \
-        data/embed.jsonl
+    if [ "$is_demo" = true ]; then
+        python code/main.py demo \
+            data/chunk.jsonl \
+            data/embed.jsonl
+    else
+        python code/main.py batch \
+            data/question.jsonl \
+            data/answer.jsonl
 fi

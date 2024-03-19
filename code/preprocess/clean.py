@@ -7,9 +7,9 @@ import re
 from functools import partial
 import typer
 from typing_extensions import Annotated
-from rich import print
 from rich.progress import track
 from pathlib import Path
+from utils import log
 
 
 app = typer.Typer(help=__doc__)
@@ -161,7 +161,7 @@ def cli(
             output_file = output / base
             output_file.parent.mkdir(parents=True, exist_ok=True)
             process_one_file(input_file, output_file)
-        print(f"Saved to {output}")
+        log(f"{__name__} completed. Results are saved to {output}")
     
 
 if __name__ == "__main__":
