@@ -14,6 +14,10 @@ log() {
     echo -e "$(date '+%Y-%m-%dT%H:%M:%S') (${fname}:${BASH_LINENO[0]}:${FUNCNAME[1]}) $*"
 }
 
+set -o allexport
+source .env set
+set +o allexport
+
 umask 000
 
 
@@ -36,7 +40,9 @@ fi
 
 if (( $(echo "$stage <= 0.2" | bc -l) )); then
     python code/parallel_request.py \
-        --model text-embedding-3-small \
+        --model $embedding_model \
+        --base-url $base_url \
+        --api-key $api_key \
         data/chunk.jsonl \
         data/embed.jsonl || { log "failed to do parallel_request"; exit 1; }
 fi
