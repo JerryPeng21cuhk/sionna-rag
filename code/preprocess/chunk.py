@@ -205,7 +205,7 @@ class MdTree:
         def helper(node):
             assert node is not None
             text = node.text
-            if len(text) <= min_size:
+            if get_token(text) <= min_size:
                 yield ''.join(text)
             else:
                 num_token = 0

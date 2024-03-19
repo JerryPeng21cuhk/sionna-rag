@@ -24,7 +24,7 @@ is_demo=true
 
 if (( $(echo "$stage <= 0.0" | bc -l) )); then
     python code/preprocess/clean.py \
-        data/markdown \
+        data/demo \
         data/clean || { log "failed to clean"; exit 1; }
 fi
 
