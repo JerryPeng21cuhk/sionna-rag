@@ -1,7 +1,6 @@
 import os
 from getpass import getpass
 from pathlib import Path
-from tempfile import gettempdir
 from typing import Any
 from click import UsageError
 

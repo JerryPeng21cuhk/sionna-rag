@@ -70,8 +70,10 @@ def batch(
 ):
     import os, tempfile
     from parallel_request import cli
-    logging.basicConfig(level=logging_level, force=True)
-    log = logging.getLogger("rich")
+    # initialize logging
+    log.setLevel(logging_level)
+    log.debug(f"Logging initialized at level {logging_level}")
+    # create database
     db = VectorDB(vectordb)
     if rebuild:
         assert docs_jsonl, f"Input docs_jsonl ({docs_jsonl}) doesn't exist."
@@ -106,8 +108,10 @@ def demo(
     top_k: Annotated[int, typer.Option(help="number of contexts to retrieve")] = cfg.get("top_k", 1),
     logging_level: Annotated[int, typer.Option(help=LOGGING_HELP)] = logging.ERROR,
 ):
-    logging.basicConfig(level=logging_level, force=True)
-    log = logging.getLogger("rich")
+    # initialize logging
+    log.setLevel(logging_level)
+    log.debug(f"Logging initialized at level {logging_level}")
+    # create database
     db = VectorDB(vectordb)
     if rebuild:
         assert docs_jsonl, f"Input docs_jsonl ({docs_jsonl}) doesn't exist."

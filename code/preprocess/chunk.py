@@ -205,7 +205,7 @@ class MdTree:
         def helper(node):
             assert node is not None
             text = node.text
-            if get_token(text) <= min_size:
+            if get_token(''.join(text)) <= min_size:
                 yield ''.join(text)
             else:
                 num_token = 0
@@ -265,8 +265,8 @@ def debug(
             output_file = output / base
             output_file.parent.mkdir(parents=True, exist_ok=True)
             debug_one_file(input_file, output_file)
-        log(f"Saved to {output}")
-        
+        log.info(f"{Path(__name__).stem} completed. Results are saved to {output}")
+
 
 @app.command("run")
 def run(
@@ -285,7 +285,7 @@ def run(
                 files,
                 description=f"Chunking {len(files)} markdown files from {input}"):
             process_one_file(file, output)
-    log.info(f"{__name__} completed. Results are saved to {output}")
+    log.info(f"{Path(__name__).stem} completed. Results are saved to {output}")
 
 
 if __name__ == "__main__":

@@ -19,15 +19,21 @@ from typing_extensions import Annotated
 from pathlib import Path
 
 try:
-    from preprocess import log
+    from preprocess import log, LOGGING_HELP
 except:
     from rich.logging import RichHandler
     FORMAT = "%(message)s"
+    LOGGING_HELP="""level of logging to use; higher numbers will log fewer messages
+    - 40 = ERROR; will log only when requests fail after all retries
+    - 30 = WARNING; will log when requests his rate limits or other errors
+    - 20 = INFO; will log when requests start and the status at finish
+    - 10 = DEBUG; will log various things as the loop runs to see when they occur
+    - if omitted, will default to 20 (INFO).
+    """
     logging.basicConfig(
         level=logging.INFO, format=FORMAT, datefmt="[%X]", handlers=[RichHandler()]
     )
     log = logging.getLogger("rich")
-
 
 
 app = typer.Typer(help=__doc__)
@@ -133,8 +139,8 @@ async def process_api_requests_from_file(
     )
 
     # initialize logging
-    logging.basicConfig(level=logging_level)
-    logging.debug(f"Logging initialized at level {logging_level}")
+    log.setLevel(logging_level)
+    log.debug(f"Logging initialized at level {logging_level}")
 
     # initialize trackers
     queue_of_requests_to_retry = asyncio.Queue()
@@ -228,8 +234,6 @@ async def process_api_requests_from_file(
                         asyncio.create_task(
                             next_request.call_api(
                                 session=session,
-                                # request_url=request_url,
-                                # request_header=request_header,
                                 retry_queue=queue_of_requests_to_retry,
                                 save_filepath=save_filepath,
                                 status_tracker=status_tracker,
@@ -258,7 +262,7 @@ async def process_api_requests_from_file(
                     )
                     await asyncio.sleep(remaining_seconds_to_pause)
                     # ^e.g., if pause is 15 seconds and final limit was hit 5 seconds ago
-                    log.warn(
+                    log.warning(
                         f"Pausing to cool down until {time.ctime(status_tracker.time_of_last_rate_limit_error + seconds_to_pause_after_rate_limit_error)}"
                     )
 
@@ -462,7 +466,7 @@ def cli(
     max_tokens_per_minute: Annotated[int, typer.Option()] = 300_000 * 0.5,
     token_encoding_name: Annotated[str, typer.Option()] = 'cl100k_base',
     max_attempts: Annotated[int, typer.Option()] = 5,
-    logging_level: Annotated[int, typer.Option()] = logging.INFO):
+    logging_level: Annotated[int, typer.Option(help=LOGGING_HELP)] = logging.INFO):
     """This script processes in parallel a jsonl file that has each line of json input messages to LLM.
     It returns another jsonl file that stores each line of json output response from LLM.
     """

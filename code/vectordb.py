@@ -6,7 +6,8 @@ from pathlib import Path
 import json
 import typer
 from typing_extensions import Annotated
-from preprocess import log
+from preprocess import log, LOGGING_HELP
+import logging
 
 
 app = typer.Typer(help=__doc__)
@@ -100,7 +101,11 @@ def cli(
     docs_jsonl: Annotated[Path, typer.Argument(help="a jsonl file stores line of doc")],
     embed_jsonl: Annotated[Path, typer.Argument(help="a jsonl file stores line of embedding")],
     name: Annotated[str, typer.Option(help="database name")] = cfg.get("vectordb", "vectordb"),
+    logging_level: Annotated[int, typer.Option(help=LOGGING_HELP)] = logging.INFO,
 ):
+    # initialize logging
+    log.setLevel(logging_level)
+    log.debug(f"Logging initialized at level {logging_level}")
     assert docs_jsonl, f"Input docs_jsonl ({docs_jsonl}) doesn't exist."
     assert embed_jsonl, f"Input embed_jsonl ({embed_jsonl}) doesn't exist."
     db = VectorDB(name)
