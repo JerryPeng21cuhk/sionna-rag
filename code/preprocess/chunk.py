@@ -170,9 +170,11 @@ def block_read(lines):
         if is_start_codeblock(line):
             yield flush_buffer()
             buffer.append(line)
+            continue
         elif is_end_codeblock(line):
             buffer.append(line)
             yield flush_buffer()
+            continue
         buffer.append(line)
     yield flush_buffer()
 
@@ -265,7 +267,7 @@ def debug(
             output_file = output / base
             output_file.parent.mkdir(parents=True, exist_ok=True)
             debug_one_file(input_file, output_file)
-        log.info(f"{Path(__name__).stem} completed. Results are saved to {output}")
+    log.info(f"{Path(__name__).stem} completed. Results are saved to {output}")
 
 
 @app.command("run")

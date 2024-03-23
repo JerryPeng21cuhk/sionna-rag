@@ -105,6 +105,11 @@ def remove_multi_newlines(lines, num_newline=2):
                 yield '\n'
                 cnt -= 1
             yield line
+    cnt = min(num_newline, cnt)
+    while cnt > 0:
+        yield '\n'
+        cnt -= 1
+    yield line
 
 
 class MarkdownReader(object):
@@ -161,7 +166,7 @@ def cli(
             output_file = output / base
             output_file.parent.mkdir(parents=True, exist_ok=True)
             process_one_file(input_file, output_file)
-        log.info(f"{Path(__file__).stem} completed. Results are saved to {output}")
+    log.info(f"{Path(__file__).stem} completed. Results are saved to {output}")
     
 
 if __name__ == "__main__":

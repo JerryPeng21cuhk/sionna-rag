@@ -1,6 +1,7 @@
 import logging
 from rich.logging import RichHandler
 
+
 FORMAT = "%(message)s"
 LOGGING_HELP="""level of logging to use; higher numbers will log fewer messages
     - 40 = ERROR; will log only when requests fail after all retries
@@ -10,6 +11,6 @@ LOGGING_HELP="""level of logging to use; higher numbers will log fewer messages
     - if omitted, will default to 20 (INFO).
 """
 logging.basicConfig(
-    level=logging.DEBUG, format=FORMAT, datefmt="[%X]", handlers=[RichHandler()]
+    level=logging.ERROR, format=FORMAT, datefmt="[%X]", handlers=[RichHandler()]
 )
 log = logging.getLogger("rich")

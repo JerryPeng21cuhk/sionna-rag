@@ -2,7 +2,7 @@
 """
 import typer
 from typing_extensions import Annotated
-from litellm import acompletion, completion
+from litellm import completion
 from config import cfg
 from pathlib import Path
 from vectordb import VectorDB
@@ -61,10 +61,10 @@ def answer(question, db, top_k=1, llm_func=llm_demo):
 def batch(
     input_jsonl: Annotated[Path, typer.Argument(help="a jonsl file stores line of question")],
     output_jsonl: Annotated[Path, typer.Argument(help="a jsonl file stores line of llm response")],
-    docs_jsonl: Annotated[Path, typer.Option(help="a jsonl file stores line of doc")] = None,
-    embed_jsonl: Annotated[Path, typer.Option(help="a jsonl file stores line of embedding")] = None,
     vectordb: Annotated[str, typer.Option(help="name of the database")] = cfg.get("vectordb", "vectordb"),
     rebuild: Annotated[bool, typer.Option(help="if true, rebuild the database from docs_jsonl and embed_jsonl")] = False,
+    docs_jsonl: Annotated[Path, typer.Option(help="a jsonl file stores line of doc")] = None,
+    embed_jsonl: Annotated[Path, typer.Option(help="a jsonl file stores line of embedding")] = None,
     top_k: Annotated[int, typer.Option(help="number of contexts to retrieve")] = cfg.get("top_k", 1),
     logging_level: Annotated[int, typer.Option(help=LOGGING_HELP)] = logging.INFO,
 ):
@@ -106,7 +106,7 @@ def demo(
     vectordb: Annotated[str, typer.Option(help="name of the database")] = cfg.get("vectordb", "vectordb"),
     rebuild: Annotated[bool, typer.Option(help="if true, rebuild the database from docs_jsonl and embed_jsonl")] = False,
     top_k: Annotated[int, typer.Option(help="number of contexts to retrieve")] = cfg.get("top_k", 1),
-    logging_level: Annotated[int, typer.Option(help=LOGGING_HELP)] = logging.ERROR,
+    logging_level: Annotated[int, typer.Option(help=LOGGING_HELP)] = logging.INFO,
 ):
     # initialize logging
     log.setLevel(logging_level)
