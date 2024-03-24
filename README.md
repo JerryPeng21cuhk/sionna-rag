@@ -4,9 +4,9 @@ Still under active construction
 ## Quick Start
 
 ### Install required packages
-This repo primarily depends on litellm, chromadb to create an RAG system. You shall start by installing the required packages following the command.
+This repo primarily depends on litellm, chromadb to create an Retrieval-Augmented Generation (RAG) system for [sionna](https://nvlabs.github.io/sionna/). You shall start by installing the required packages following the command.
 ```
-pip3 install -r requirements.py
+pip3 install -r requirements.txt
 ```
 
 ### Create `.env`
@@ -20,7 +20,7 @@ vectordb=sionna_db
 ```
 
 ### Run example code
-Now you can start by running the following command. It provides an demo interface for you inquiry the RAG system.
+Now you can start by running the following command. It provides an demo interface for you to typing questions.
 ```bash
 bash run.sh
 ```
