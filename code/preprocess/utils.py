@@ -3,7 +3,7 @@ from rich.logging import RichHandler
 
 
 FORMAT = "%(message)s"
-LOGGING_HELP="""level of logging to use; higher numbers will log fewer messages
+LOGGING_HELP="""Level of logging to use; higher numbers will log fewer messages
     - 40 = ERROR; will log only when requests fail after all retries
     - 30 = WARNING; will log when requests his rate limits or other errors
     - 20 = INFO; will log when requests start and the status at finish

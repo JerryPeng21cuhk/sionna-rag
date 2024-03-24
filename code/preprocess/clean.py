@@ -42,6 +42,39 @@ def remove_image(lines):
         yield line
 
 
+def remove_special_char(lines):
+    for line in lines:
+        yield line.encode('ascii', errors='ignore').decode()
+
+
+def remove_html(lines):
+    pattern_i = re.compile(r"<i (class|style)=.*?>(.*?)</i>")
+    pattern_a1 = re.compile(r"<a .*?href=\"(.*?)\".*?></a>")
+    pattern_a2 = re.compile(r"<a .*?href=\"(.*?)\".*?>(.+?)</a>")
+    pattern_p = re.compile(r"<p .*?>(.+?)")
+    pattern_td = re.compile(r"<td .*?>(.*?)</td>")
+    pattern_table = re.compile(r"<table>(.*?)</table>")
+    pattern_h = re.compile(r"<h\d .*?>")
+    pattern_embed = re.compile(r"<(/)?embed>")
+    pattern_img = re.compile(r"<img .*?>")
+    pattern_em = re.compile(r"<em.*?>(.*?)</em>")
+    pattern_api_doc1 = re.compile(r"\*`(.+?)` \*")
+    # pattern_fix_source = re.compile(r"\[`\[source\]`\]\(\.\./_modules/sionna/config\.html#Config")
+    for line in lines:
+        line = pattern_i.sub(r'\2', line)
+        line = pattern_a1.sub(r'', line)
+        line = pattern_a2.sub(r'[\2](\1)', line)
+        line = pattern_p.sub(' ', line)
+        line = pattern_td.sub(r'\1', line)
+        line = pattern_table.sub(r' \1', line)
+        line = pattern_h.sub('', line)
+        line = pattern_embed.sub('', line)
+        line = pattern_img.sub('', line)
+        line = pattern_em.sub(r'*\1*', line)
+        line = pattern_api_doc1.sub(r'`\1` ', line)
+        yield line
+
+
 def remove_toc(lines):
     is_start = False
     start_pattern = re.compile('## Table of Contents')
@@ -81,16 +114,16 @@ def multiline_match(stream, patterns):
 
 
 remove_codeblock_idx = partial(multiline_match, patterns=[
-    "^```python$",
-    "^\[\d+\]:$",
-    "^```$",
+    r"^```python$",
+    r"^\[\d+\]:$",
+    r"^```$",
 ])
 
 
 remove_script_tag = partial(multiline_match, patterns=[
-    "^<script type=.*>$",
-    "\{.*\}",
-    "^</script>$"
+    r"^<script type=.*>$",
+    r"\{.*\}",
+    r"^</script>$"
 ])
 
 
@@ -121,6 +154,8 @@ class MarkdownReader(object):
             remove_headerlink,
             remove_codeblock_idx,
             remove_script_tag,
+            remove_special_char,
+            remove_html,
             remove_multi_newlines,
         ]
         self.stream = open(filepath)

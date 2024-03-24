@@ -79,8 +79,8 @@ def batch(
         assert docs_jsonl, f"Input docs_jsonl ({docs_jsonl}) doesn't exist."
         assert embed_jsonl, f"Input embed_jsonl ({embed_jsonl}) doesn't exist."
         db.rebuild(docs_jsonl, embed_jsonl)
-    dump = lambda x: json.dumps([x])
-    add_context = partial(answer, db=db, top_k=top_k, llm_func=dump)
+    # dump = lambda x: x
+    add_context = partial(answer, db=db, top_k=top_k, llm_func=lambda x: x)
     tmp = tempfile.NamedTemporaryFile(delete=False)
     try:
         log.info(f"{tmp.name} created for temperal storage")

@@ -31,7 +31,7 @@ is_demo=true
 
 if (( $(echo "$stage <= 0.0" | bc -l) )); then
     python code/preprocess/clean.py \
-        data/demo \
+        data/markdown \
         data/clean || { log "failed to clean"; exit 1; }
 fi
 
@@ -64,6 +64,6 @@ if (( $(echo "$stage <= 1.0" | bc -l) )); then
     else
         python code/main.py batch \
             data/question.jsonl \
-            data/answer.jsonl
+            data/prediction.jsonl
     fi
 fi

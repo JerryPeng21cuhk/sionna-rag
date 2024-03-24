@@ -4,7 +4,6 @@ code is reivsed from [mdsplit](https://github.com/markusstraub/mdsplit/blob/main
 Note:
 - *Code blocks* (```)are detected (and headers inside ignored)
 - Only ATX headings (such as # Heading 1) are supported.
-- Optionally a table of contents (toc.md) can be created.
 """
 
 from collections import namedtuple
@@ -154,8 +153,8 @@ def block_read(lines):
         "```python\nnum_tx_ant = 4\nnum_rx_ant = 16\nnum_bits_per_symbol = 4\nbatch_size = 1024\nqam_source = QAMSource(num_bits_per_symbol)\nx = qam_source([batch_size, num_tx_ant])\nprint(x.shape)\n```\n",
     ]
     """
-    pattern_codeblock_start = re.compile("^```\w+")
-    pattern_codeblock_end = re.compile("^```$")
+    pattern_codeblock_start = re.compile(r"^```\w+")
+    pattern_codeblock_end = re.compile(r"^```$")
     is_start_codeblock = lambda x: pattern_codeblock_start.match(x)
     is_end_codeblock = lambda x: pattern_codeblock_end.match(x)
     buffer = []
@@ -203,11 +202,12 @@ class MdTree:
             if root is None: root = node
         self.root = root
     
-    def chunk(self, min_size=500):
+    def chunk(self, min_size=40, max_size=500):
         def helper(node):
             assert node is not None
             text = node.text
-            if get_token(''.join(text)) <= min_size:
+            num_token = get_token("".join(text))
+            if min_size <= num_token <= max_size:
                 yield ''.join(text)
             else:
                 num_token = 0
@@ -215,19 +215,21 @@ class MdTree:
                 for block in block_read(text):
                     num_token += get_token(block)
                     blocks.append(block)
-                    if num_token >= min_size:
+                    if num_token >= max_size:
                         num_token = 0
                         yield '\n'.join(blocks)
                         blocks = []
                 if blocks:
-                    yield '\n'.join(blocks)
+                    res_text = '\n'.join(blocks)
+                    if get_token(res_text) >= min_size:
+                        yield res_text
                     blocks = []
             for child in node.childs:
                 for block in helper(child):
                     yield block
-            return
+
         for block in helper(self.root):
-            yield block
+            yield block.strip('\n')
 
 
 def debug_one_file(input: Path, output: Path):

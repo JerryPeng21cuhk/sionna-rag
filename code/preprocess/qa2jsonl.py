@@ -3,7 +3,6 @@ Store questions/answers into a separated jsonl file which later used for paralle
 """
 import json
 from pathlib import Path
-from utils import read_ia
 from typing_extensions import Annotated
 import typer
 from rich.progress import track
@@ -19,8 +18,8 @@ def read_ia(lines):
     """
     read an instruction-following .md and return (instruction, answer) iterator
     """
-    pattern_instruction_block = re.compile(r'^\*\*Instruction \d+:\*\*')
-    pattern_answer_block = re.compile("^Answer: ")
+    pattern_instruction_block = re.compile(r"^\*\*Instruction \d+:\*\* ")
+    pattern_answer_block = re.compile(r"^Answer: ")
     is_instruction_block = lambda x: pattern_instruction_block.match(x)
     is_answer_block = lambda x: pattern_answer_block.match(x)
     prev_instruction, prev_answer = [], []
@@ -31,11 +30,13 @@ def read_ia(lines):
             if prev_instruction and prev_answer:
                 yield '\n'.join(prev_instruction), '\n'.join(prev_answer)
             prev_instruction, prev_answer = [], []
-            prev_instruction.append(line)
+            # line = re.sub(r"^\*\*Instruction \d+:\*\*", "", line)
+            line = pattern_instruction_block.sub("", line)
+            prev_instruction.append(line.lstrip())
             continue
         if is_answer_block(line):
             assert len(prev_answer) == 0
-            line = re.sub(r"^Answer: ", "", line)
+            line = pattern_answer_block.sub("", line)
             prev_answer.append(line)
             continue
         if prev_answer:
