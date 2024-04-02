@@ -58,11 +58,11 @@ fi
 
 if (( $(echo "$stage <= 1.0" | bc -l) )); then
     if [ "$is_demo" = true ]; then
-        python code/main.py demo \
+        python code/answer.py demo \
             data/chunk.jsonl \
             data/embed.jsonl
     else
-        python code/main.py batch \
+        python code/answer.py batch \
             data/question.jsonl \
             data/prediction.jsonl
     fi

@@ -71,7 +71,7 @@ class VectorDB:
 
     def rebuild(self, docs_jsonl: Path, embed_jsonl: Path):
         client = chromadb.PersistentClient(path=f"data/{self.name}")
-        if self.name in client.list_collections():
+        if self.name in [db.name for db in client.list_collections()]:
             client.delete_collection(name=self.name)
         collection = client.get_or_create_collection(
             name=self.name,

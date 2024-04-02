@@ -92,7 +92,8 @@ def batch(
                 tmp.write(f"{packed}\n".encode("utf-8"))
         tmp.close()
         cli(tmp.name, output_jsonl,
-            cfg.get('llm'), cfg.get('base_url'), cfg.get('api_key')
+            cfg.get('llm'), cfg.get('base_url'), cfg.get('api_key'),
+            max_attempts=10,
         )
     finally:
         tmp.close()

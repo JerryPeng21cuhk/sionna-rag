@@ -451,7 +451,7 @@ def inplace_sort_jsonl(fname):
             data.append(json_data)
     data = sorted(data, key=lambda x: x[0])
     with open(fname, 'w') as writer:
-        for line in data:
+        for _, line in data:
             writer.write(json.dumps(line)+'\n')
 
 
