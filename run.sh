@@ -62,8 +62,21 @@ if (( $(echo "$stage <= 1.0" | bc -l) )); then
             data/chunk.jsonl \
             data/embed.jsonl
     else
-        python code/answer.py batch \
-            data/question.jsonl \
-            data/prediction.jsonl
+        for k in $(seq 1 4); do
+            python code/answer.py batch \
+                --top-k $k \
+                data/question.jsonl \
+                data/prediction_k${k}.jsonl
+        done
     fi
+fi
+
+if (( $(echo "$stage <= 1.1" | bc -l) )); then
+    for k in $(seq 1 4); do
+        python code/eval/score.py \
+            data/question.jsonl \
+            data/answer.jsonl \
+            data/prediction_k${k}.jsonl \
+            data/evaluation_k${k}.jsonl
+    done
 fi
