@@ -24,6 +24,12 @@ def cli(
     answer_jsonl: Annotated[Path, typer.Argument(help="path to a answer.jsonl file")],
     prediction_jsonl: Annotated[Path, typer.Argument(help="path to a prediction.jsonl file")],
     evaluation_jsonl: Annotated[Path, typer.Argument(help="where to store the output evaluation.jsonl file")],
+    temperature: Annotated[float, typer.Argument(help=(
+        "control the raondomness of evaluation score. "
+        "What sampling temperature to use, between 0 and 2. "
+        "Higher values like 0.8 will make the output more random, "
+        "while lower values like 0.2 will make it more focused and deterministic."
+        ))] = 0.0,
     logging_level: Annotated[int, typer.Option(help=LOGGING_HELP)] = logging.INFO,
 ):
     import os, tempfile
@@ -45,7 +51,8 @@ def cli(
             tmp.write(f"{packed}\n".encode("utf-8"))
         tmp.close()
         cli(tmp.name, evaluation_jsonl,
-            cfg.get('llm'), cfg.get('base_url'), cfg.get('api_key'))
+            cfg.get('llm'), cfg.get('base_url'), cfg.get('api_key'),
+            temperature=temperature)
     finally:
         tmp.close()
         os.unlink(tmp.name)
