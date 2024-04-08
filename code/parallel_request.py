@@ -68,7 +68,7 @@ request_capacities = {
 
 
 # request for my proxy server
-async def llm(session, messages, base_url, api_key, model):
+async def llm(session, messages, base_url, api_key, model, config):
     async with session.post(
         f"{base_url}/chat/completions",
         headers={
@@ -78,6 +78,7 @@ async def llm(session, messages, base_url, api_key, model):
         json={
             "model": model,
             "messages": messages,
+            **config,
         }
     ) as response:
         response = await response.json()
@@ -101,10 +102,10 @@ async def embedding(session, text, base_url, api_key, model):
     return response
 
 
-def run_model(session, input, base_url, api_key, model):
+def run_model(session, input, base_url, api_key, model, config):
     assert model in MODELS, f"Unexpected model: {model}"
     if MODELS[model] == 'chat/completions':
-        return llm(session, input, base_url, api_key, model)
+        return llm(session, input, base_url, api_key, model, config)
     elif MODELS[model] == 'embeddings':
         return embedding(session, input, base_url, api_key, model)
     else:
@@ -125,6 +126,7 @@ async def process_api_requests_from_file(
     base_url: str,
     api_key: str,
     model: str,
+    config: dict,
     max_requests_per_minute: float,
     max_tokens_per_minute: float,
     token_encoding_name: str,
@@ -184,6 +186,7 @@ async def process_api_requests_from_file(
                                 base_url=base_url,
                                 api_key=api_key,
                                 model=model,
+                                config=config,
                                 messages=messages,
                                 token_consumption=num_tokens_consumed_from_request(
                                     messages,
@@ -303,6 +306,7 @@ class APIRequest:
     api_key: str
     model: str
     messages: dict
+    config: dict
     token_consumption: int
     attempts_left: int
     metadata: dict
@@ -319,7 +323,7 @@ class APIRequest:
         log.info(f"Starting request #{self.task_id}")
         error = None
         try:
-            response = await run_model(session, self.messages, self.base_url, self.api_key, self.model)
+            response = await run_model(session, self.messages, self.base_url, self.api_key, self.model, self.config)
             if "error" in response:
                 log.warning(
                     f"Request {self.task_id} failed with error {response['error']}"
@@ -462,10 +466,15 @@ def cli(
     model: Annotated[str, typer.Option(help="the LLM/Embedding model to be called")] = "gpt4-1106-preview",
     base_url: Annotated[str, typer.Option(help="URL of the API endpoint to call")] = "https://drchat.xyz",
     api_key: Annotated[str, typer.Option(help="API key to use")] = os.getenv("OPENAI_API_KEY", None),
+    temperature: Annotated[float, typer.Option(help=(
+        "What sampling temperature to use, between 0 and 2. "
+        "Higher values like 0.8 will make the output more random, "
+        "while lower values like 0.2 will make it more focused and deterministic.")
+        )] = 1.0,
     max_requests_per_minute: Annotated[int, typer.Option()] = 720 * 0.5,
     max_tokens_per_minute: Annotated[int, typer.Option()] = 300_000 * 0.5,
     token_encoding_name: Annotated[str, typer.Option()] = 'cl100k_base',
-    max_attempts: Annotated[int, typer.Option()] = 5,
+    max_attempts: Annotated[int, typer.Option()] = 10,
     logging_level: Annotated[int, typer.Option(help=LOGGING_HELP)] = logging.INFO):
     """This script processes in parallel a jsonl file that has each line of json input messages to LLM.
     It returns another jsonl file that stores each line of json output response from LLM.
@@ -486,6 +495,9 @@ def cli(
             base_url=base_url,
             api_key=api_key,
             model=model,
+            config={
+                'temperature': temperature,
+            },
             max_requests_per_minute=float(max_requests_per_minute),
             max_tokens_per_minute=float(max_tokens_per_minute),
             token_encoding_name=token_encoding_name,
