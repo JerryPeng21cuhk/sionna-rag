@@ -93,7 +93,7 @@ def batch(
         tmp.close()
         cli(tmp.name, output_jsonl,
             cfg.get('llm'), cfg.get('base_url'), cfg.get('api_key'),
-            max_attempts=10,
+            max_attempts=30,
         )
     finally:
         tmp.close()
