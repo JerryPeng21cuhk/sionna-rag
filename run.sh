@@ -71,13 +71,3 @@ if (( $(echo "$stage <= 1.0" | bc -l) )); then
         done
     fi
 fi
-
-if (( $(echo "$stage <= 1.1" | bc -l) )); then
-    for k in $(seq 1 4); do
-        python code/eval/score.py \
-            data/question.jsonl \
-            data/answer.jsonl \
-            data/prediction_k${k}.jsonl \
-            data/evaluation_k${k}.jsonl
-    done
-fi
