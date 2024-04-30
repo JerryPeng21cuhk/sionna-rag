@@ -22,18 +22,6 @@ app = typer.Typer(help=__doc__)
 console = Console()
 
 
-# def llm_demo(prompt):
-#     response = completion(
-#         messages=[{"content": prompt, "role": "user"}],
-#         api_key=cfg.get("api_key"),
-#         base_url=cfg.get("base_url"),
-#         model=cfg.get("llm"),
-#         custom_llm_provider="openai",
-#         stream=True,
-#     )
-#     show(response)
-
-
 def execute_function_call(message, tools):
     to_call = message.tool_calls[0].function
     if to_call.name in tools:
@@ -86,27 +74,6 @@ class Chat:
             "role": "assistant", "content": content
         })
         return content
-
-
-# def llm_demo(prompt):
-#     # tools, jsons = load_tools(['python_code_interpreter'])
-#     # messages = [{"content": prompt, "role": "user"}]
-#     response = completion(
-#         messages=messages,
-#         tools=jsons,
-#         # tool_choice=tool_choice,
-#         api_key=cfg.get("api_key"),
-#         base_url=cfg.get("base_url"),
-#         model=cfg.get("llm"),
-#         custom_llm_provider="openai",
-#         stream=True,
-#     )
-#     show(response)
-#     # # if response.tool_calls:
-#     # if response.response_uptil_now:
-#     #     results = execute_function_call(response)
-#     #     # messages.append({"role": "function", "tool_call_id": assistant_message.tool_calls[0].id, "name": assistant_message.tool_calls[0].function.name, "content": results})
-#     return response.response_uptil_now
 
 
 def show(response, title="[green]"+cfg.get("llm")):
@@ -230,12 +197,10 @@ def demo(
     chat = Chat(db)
     while question := Prompt.ask(
         "Enter your question (quit by stroking [bold yellow]q[/] with [bold yellow]enter[/]):",
-        # default="how to build a Differentiable Communication Systems using sionna ?"
         default="perform raytracing at munich. make sure the code is runable without modifications."
         ):
         if question == 'q': break
         chat.send(question)
-        # answer(question, db, top_k)
 
 
 if __name__ == "__main__":
