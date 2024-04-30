@@ -8,6 +8,7 @@ import typer
 from typing_extensions import Annotated
 from preprocess import log, LOGGING_HELP
 import logging
+from time import sleep
 
 
 app = typer.Typer(help=__doc__)
@@ -58,8 +59,9 @@ def valid_load(docs_jsonl, embed_jsonl):
 
 
 class VectorDB:
-    def __init__(self, name: str):
+    def __init__(self, name: str, rerank=False):
         self.name = name  # cfg['vectordb']
+        self.reranker = self.build_reranker() if rerank else None
         client = chromadb.PersistentClient(path=f"data/{self.name}")
         collection = client.get_or_create_collection(
             name=self.name,
@@ -87,13 +89,35 @@ class VectorDB:
         self.client = client
         log.info(f"VectorDB reloaded with {collection.count()} docs")
 
+    def build_reranker(self):
+        import cohere
+        reranker = cohere.Client(api_key=cfg['cohere_key'])
+        return reranker
+
     def query(self, text, top_k=5):
         assert isinstance(text, str)
+        if not self.reranker:
+            results = self.collection.query(
+                query_texts=[text],
+                n_results=top_k,
+            )
+            return results
+        # reranker exists
+        coarse_k = max(8, top_k*3)
         results = self.collection.query(
             query_texts=[text],
-            n_results=top_k,
+            n_results=coarse_k,
         )
-        return results
+        docs = results['documents'][0]
+        docs_sel = self.reranker.rerank(
+            model=cfg['reranker'],
+            query=text,
+            documents=docs,
+            top_n=top_k,
+        )
+        docs_sel = [docs[doc.index] for doc in docs_sel.results]
+        sleep(12)
+        return {'documents':docs_sel}
 
 
 @app.command()

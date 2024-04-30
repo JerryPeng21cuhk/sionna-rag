@@ -59,6 +59,7 @@ fi
 if (( $(echo "$stage <= 1.0" | bc -l) )); then
     if [ "$is_demo" = true ]; then
         python code/answer.py demo \
+            --rerank \
             data/chunk.jsonl \
             data/embed.jsonl
     else

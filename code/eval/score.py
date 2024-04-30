@@ -1,3 +1,7 @@
+""" Score the LLM generated answers within a range of [1, 10].
+The input includes question.jsonl, answer.jsonl, prediction.jsonl, respectively.
+
+"""
 from config import cfg
 from pathlib import Path
 import json
@@ -51,7 +55,7 @@ def cli(
             tmp.write(f"{packed}\n".encode("utf-8"))
         tmp.close()
         cli(tmp.name, evaluation_jsonl,
-            cfg.get('llm'), cfg.get('base_url'), cfg.get('api_key'),
+            cfg.get('evaluator'), cfg.get('base_url'), cfg.get('api_key'),
             temperature=temperature)
     finally:
         tmp.close()

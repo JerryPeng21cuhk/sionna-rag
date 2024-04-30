@@ -42,7 +42,9 @@ app = typer.Typer(help=__doc__)
 MODELS = {
     'gpt-3.5-turbo': "chat/completions",
     'gpt-3.5-turbo-16k': "chat/completions",
+    "gpt-3.5-turbo-ft-jiewen": "chat/completions",
     'gpt4-1106-preview': "chat/completions",
+    'gpt4-0125-preview': "chat/completions",
     'gpt4-32k': "chat/completions",
     'text-embedding-ada-002': "embeddings",
     'text-embedding-3-large': "embeddings",
@@ -52,7 +54,9 @@ MODELS = {
 token_capacities = {
     'gpt-3.5-turbo': 300_000,
     'gpt-3.5-turbo-16k': 300_000,
+    "gpt-3.5-turbo-ft-jiewen": 250_000,
     'gpt4-1106-preview': 80_000,
+    'gpt4-0125-preview': 80_000,
     'gpt4-32k': 80_000,
     'text-embedding-ada-002': 300_000,
     'text-embedding-3-large': 350_000,
@@ -62,7 +66,9 @@ token_capacities = {
 request_capacities = {
     'gpt-3.5-turbo': 1800,
     'gpt-3.5-turbo-16k': 1800,
+    "gpt-3.5-turbo-ft-jiewen": 1500,
     'gpt4-1106-preview': 480,
+    'gpt4-0125-preview': 480,
     'gpt4-32k': 480,
     'text-embedding-ada-002': 1800,
     'text-embedding-3-large': 2100,
