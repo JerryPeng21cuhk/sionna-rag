@@ -17,6 +17,9 @@ api_key=<YOUR-API-KEY>
 embedding_model=text-embedding-3-small
 llm=gpt4-1106-preview
 vectordb=sionna_db
+evaluator=gpt4-32k
+cohere_key=<YOUR-COHERE-KEY>
+reranker=rerank-english-v3.0
 ```
 
 ### Run example code
