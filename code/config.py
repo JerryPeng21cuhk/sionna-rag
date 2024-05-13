@@ -56,8 +56,8 @@ class Config(dict):  # type: ignore
                     self[key] = value
 
     def get(self, key: str, default=None) -> str:  # type: ignore
-        # Prioritize environment variables over config file.
-        value = os.getenv(key) or super().get(key)
+        # Prioritize config file over environment variables.
+        value = super().get(key) or os.getenv(key)
         to_return = value if value is not None else default
         if to_return is None:
             raise UsageError(f"Missing config key: {key}")

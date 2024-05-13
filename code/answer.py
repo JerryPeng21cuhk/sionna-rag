@@ -34,7 +34,7 @@ def execute_function_call(message, tools):
 
 
 class Chat:
-    def __init__(self, vecdb):
+    def __init__(self, vecdb, top_k):
         self.messages = [{
             "role": "system",
             "content": (
@@ -47,7 +47,7 @@ class Chat:
         }]
         self.tools, self.jsons = \
             load_tools(['python_code_interpreter'])
-        self.add_context = partial(answer, db=vecdb, top_k=1, llm_func=lambda x: x)
+        self.add_context = partial(answer, db=vecdb, top_k=top_k, llm_func=lambda x: x)
 
     def send(self, question):
         # if not self.messages:
@@ -68,7 +68,7 @@ class Chat:
             custom_llm_provider="openai",
             stream=True,
         )
-        show(response)
+        show(response, title="[green]"+cfg.get("llm"))
         content = response.response_uptil_now
         self.messages.append({
             "role": "assistant", "content": content
@@ -92,8 +92,6 @@ def answer(question, db, top_k=1, llm_func=lambda x: x):
         return llm_func(prompt)
     context = db.query(question, top_k)
     documents = context['documents']
-    if top_k > 1:
-        documents = documents[0]
     docs = [f'Context {i}: {doc}' for i,doc in enumerate(documents)]
     ctx ='\n\n'.join(docs)
     prompt = (
@@ -194,7 +192,7 @@ def demo(
         assert docs_jsonl, f"Input docs_jsonl ({docs_jsonl}) doesn't exist."
         assert embed_jsonl, f"Input embed_jsonl ({embed_jsonl}) doesn't exist."
         db.rebuild(docs_jsonl, embed_jsonl)
-    chat = Chat(db)
+    chat = Chat(db, top_k=top_k)
     while question := Prompt.ask(
         "Enter your question (quit by stroking [bold yellow]q[/] with [bold yellow]enter[/]):",
         default="perform raytracing at munich. make sure the code is runable without modifications."

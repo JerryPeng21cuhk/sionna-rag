@@ -488,8 +488,8 @@ def cli(
     """This script processes in parallel a jsonl file that has each line of json input messages to LLM.
     It returns another jsonl file that stores each line of json output response from LLM.
     """
-    max_requests_per_minute = min(max_requests_per_minute, 0.5 * request_capacities[model])
-    max_tokens_per_minute = min(max_tokens_per_minute, 0.5 * token_capacities[model])
+    max_requests_per_minute = min(max_requests_per_minute, 0.9 * request_capacities[model])
+    max_tokens_per_minute = min(max_tokens_per_minute, 0.9 * token_capacities[model])
     if output_filepath is None:
         output_filepath = input_filepath.replace(".jsonl", "_results.jsonl")
     # empty the output file

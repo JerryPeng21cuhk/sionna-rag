@@ -116,7 +116,6 @@ class VectorDB:
             top_n=top_k,
         )
         docs_sel = [docs[doc.index] for doc in docs_sel.results]
-        sleep(12)
         return {'documents':docs_sel}
 
 
